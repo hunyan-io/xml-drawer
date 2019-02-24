@@ -2,6 +2,8 @@ const http = require('http');
 const { parse } = require('querystring');
 const xmlDrawer = require('./xml-drawer');
 
+const PORT = process.env.PORT || 5000
+
 const appForm = 'application/x-www-form-urlencoded';
 
 const throwError = function(res, errString) {
@@ -43,4 +45,4 @@ http.createServer(function (req, res) {
 	} else if (req.method == "GET") {
 		drawXml(parse(req.path), res);
 	}
-}).listen(80);
+}).listen(PORT);

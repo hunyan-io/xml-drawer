@@ -156,9 +156,8 @@ const drawXml = function(xml) {
 		}
 	}
 
-	bg.drawImage(fgcanvas,0,0);
-
 	return order.onFinish(() => {
+		bg.drawImage(fgcanvas,0,0,width,height);
 		return bgcanvas.createPNGStream()
 	});
 };

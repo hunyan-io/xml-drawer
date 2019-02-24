@@ -39,16 +39,16 @@ const promiseHandling = function() {
 }
 
 const drawRect = function(ctx, x, y, width, height, angle, style) {
-	ctx.rotate(angle);
 	ctx.translate(x,y);
+	ctx.rotate(angle);
 	if (style instanceof Canvas.Image) {
-		ctx.drawImage(style,0,0,width,height)
+		ctx.drawImage(style, -width/2, -height/2, width, height)
 	} else {
 		ctx.fillStyle = style;
-		ctx.fillRect(0, 0, width, height);
+		ctx.fillRect(-width/2, -height/2, width, height);
 	}
-	ctx.translate(-x,-y);
 	ctx.rotate(-angle);
+	ctx.translate(-x,-y);
 }
 
 const drawCircle = function(ctx, x, y, r, style, startAngle=0, endAngle=Math.PI*2) {
@@ -66,8 +66,6 @@ const drawGround = function(bg, fg, ground) {
 
 	const map = (ground.n || t == 9) ? fg : bg;
 
-	x -= l/2
-	y -= (t==13?l:h)/2
 	a *= Math.PI/180
 
 	if (t == 12) {

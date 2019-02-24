@@ -42,7 +42,7 @@ const drawRect = function(ctx, x, y, width, height, angle, style) {
 	ctx.translate(x,y);
 	ctx.rotate(angle);
 	if (style instanceof Canvas.Image) {
-		ctx.drawImage(style, -width/2, -height/2, width, height)
+		ctx.drawImage(style, -width/2, -height/2, width, height+1)
 	} else {
 		ctx.fillStyle = style;
 		ctx.fillRect(-width/2, -height/2, width, height);

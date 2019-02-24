@@ -17,7 +17,6 @@ const drawXml = function(data, res) {
 			xmlDrawer(data.xml, (stream) => {
 				res.writeHead(200, {'Content-Type': 'image/png'});
 				stream.pipe(res);
-				res.end();
 			});
 		} catch (err) {
 			throwError(res, "Invalid xml.")
@@ -43,6 +42,6 @@ http.createServer(function (req, res) {
 			onPostData(req, res, drawXml);
 		}
 	} else if (req.method == "GET") {
-		drawXml(parse(req.path), res);
+		drawXml(parse(req.url.substring(2)), res);
 	}
 }).listen(PORT);

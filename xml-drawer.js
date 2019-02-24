@@ -139,6 +139,7 @@ const drawXml = function(xml) {
  	const joints = (xml.c.z[0].l || [''])[0].jd;
 
 	if (!propreties.f) {
+		bg.fillStyle = "#6A7495";
 		bg.fillRect(0,0,width,height);
 		drawJointsList(bg, fg, joints);
 	} else {

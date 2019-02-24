@@ -38,14 +38,25 @@ const promiseHandling = function() {
 	}
 }
 
-const drawRect = function(ctx, x, y, width, height, angle, style) {
+const drawRect = function(ctx, x, y, width, height, angle, style, repeat) {
 	ctx.translate(x,y);
 	ctx.rotate(angle);
+	height = parseInt(height)+0.5;
 	if (style instanceof Canvas.Image) {
-		ctx.drawImage(style, -width/2, -height/2, width, parseInt(height)+0.5);
+		if (repeat) {
+			let	w = style.width,
+				h = style.height;
+			const len = Math.ceil(width/w);
+			for (let i = 0; i < len; i++) {
+				let wid = i==(len-1) ? width-w*i : w;
+				ctx.drawImage(style, 0, 0, wid, h, w*i-width/2, -height/2, wid, h);
+			}
+		} else {
+			ctx.drawImage(style, -width/2, -height/2, width, height);
+		}
 	} else {
 		ctx.fillStyle = style;
-		ctx.fillRect(-width/2, -height/2, width, parseInt(height)+0.5);
+		ctx.fillRect(-width/2, -height/2, width, height);
 	}
 	ctx.rotate(-angle);
 	ctx.translate(-x,-y);
@@ -77,7 +88,7 @@ const drawGround = function(bg, fg, ground) {
 			return [Canvas.loadImage("grounds/"+tiledGrounds[t][0]+".png"), (image) => {
 				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"));
 				return Canvas.loadImage("grounds/"+tiledGrounds[t][1]+".png").then((top) => {
-					drawRect(map,x,y,l,top.height-1,a,map.createPattern(top,"repeat"));
+					drawRect(map,x,y,l,h,a,top,true);
 				});
 			}];
 		} else {
@@ -94,6 +105,7 @@ const drawGround = function(bg, fg, ground) {
 }
 
 const drawJoint = function(bg, fg, joint) {
+	if (!joint.c || !joint.p1 || !joint.p2) return;
 	let c = joint.c.split(","),
 		p1 = joint.p1.split(","),
 		p2 = joint.p2.split(",");
@@ -126,7 +138,8 @@ const drawXml = function(xml) {
 
 	const propreties = typeof xml.c.p[0] == 'object' && xml.c.p[0]['$'] || {};
 
-	const {l:width=800,h:height=400} = propreties;
+	let {l:width=800,h:height=400} = propreties;
+	width = parseInt(width), height = parseInt(height);
 
     const bgcanvas = Canvas.createCanvas(width, height);
     const fgcanvas = Canvas.createCanvas(width, height);
@@ -158,7 +171,7 @@ const drawXml = function(xml) {
 
 	return order.onFinish(() => {
 		bg.drawImage(fgcanvas,0,0,width,height);
-		return bgcanvas.createPNGStream()
+		return bgcanvas.createPNGStream();
 	});
 };
 

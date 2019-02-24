@@ -42,10 +42,10 @@ const drawRect = function(ctx, x, y, width, height, angle, style) {
 	ctx.translate(x,y);
 	ctx.rotate(angle);
 	if (style instanceof Canvas.Image) {
-		ctx.drawImage(style, -width/2, -height/2, width, parseInt(height)+1);
+		ctx.drawImage(style, -width/2, -height/2, width, parseInt(height)+0.5);
 	} else {
 		ctx.fillStyle = style;
-		ctx.fillRect(-width/2, -height/2, width, parseInt(height)+1);
+		ctx.fillRect(-width/2, -height/2, width, parseInt(height)+0.5);
 	}
 	ctx.rotate(-angle);
 	ctx.translate(-x,-y);
@@ -77,7 +77,7 @@ const drawGround = function(bg, fg, ground) {
 			return [Canvas.loadImage("grounds/"+tiledGrounds[t][0]+".png"), (image) => {
 				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"));
 				return Canvas.loadImage("grounds/"+tiledGrounds[t][1]+".png").then((top) => {
-					drawRect(map,x,y,l,top.height-2,a,map.createPattern(top,"repeat"));
+					drawRect(map,x,y,l,top.height-1,a,map.createPattern(top,"repeat"));
 				});
 			}];
 		} else {

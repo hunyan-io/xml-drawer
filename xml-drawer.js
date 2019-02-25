@@ -62,10 +62,10 @@ const drawRect = function(ctx, x, y, width, height, angle, style, repeat) {
 	ctx.translate(-x,-y);
 }
 
-const drawCircle = function(ctx, x, y, r, style, startAngle=0, endAngle=Math.PI*2) {
+const drawCircle = function(ctx, x, y, r, style) {
 	ctx.fillStyle = style;
 	ctx.beginPath();
-	ctx.arc(x,y,r,startAngle,endAngle);
+	ctx.arc(x,y,r,0,Math.PI*2);
 	ctx.fill();
 }
 
@@ -82,7 +82,7 @@ const drawGround = function(bg, fg, ground) {
 	if (t == 12) {
 		drawRect(map,x,y,l,h,a,"#"+o);
 	} else if (t == 13) {
-		drawCircle(map,x,y,l,"#"+o);
+		drawCircle(map,parseInt(x),parseInt(y),parseInt(l),"#"+o);
 	} else if (tiledGrounds[t]) {
 		if (typeof tiledGrounds[t] == "object") {
 			return [Canvas.loadImage("grounds/"+tiledGrounds[t][0]+".png"), (image) => {

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const Canvas = require("canvas");
 const { parseString } = require('xml2js');
+const handleDeco = require('./decorations/handle');
 
 const tiledGrounds = {"3":true,"5":true,"6":["5","6"],"7":true,"9":true,"10":["10","10p"],"11":["5","11"],"15":true}
 
@@ -121,14 +122,39 @@ const drawJoint = function(bg, fg, joint) {
 	map.stroke();
 }
 
-const drawJointsList = function(bg, fg, joints) {
+const drawDecoration = function(bg, fg, width, decoration) {
+	const p = decoration.p.split(',');
+	const map = (p[0]==='0') ? bg : fg,
+		  reverse = (p[1]==='1'),
+		  [deco,w,h] = handleDeco(Canvas.createCanvas,'./'+decoration.t,decoration.c);
+	let x = decoration.x - w/2,
+		y = decoration.y - h;
+	if (reverse) {
+		map.save();
+		map.translate(x, y);
+		map.scale(-1,1)
+		map.drawImage(deco,-w,0);
+		map.restore();
+	} else {
+		map.drawImage(deco,x,y);
+	}
+}
+
+const drawSyncItems = function(bg, fg, width, decorations, joints) {
+	if (decorations) {
+		for (let i = 0; i < decorations.length; i++) {
+			if (decorations[i]) {
+				drawDecoration(bg, fg, width, decorations[i]['$']);
+			}
+		}
+	}
 	if (joints) {
 		for (let i = 0; i < joints.length; i++) {
 			if (joints[i]) {
 				drawJoint(bg, fg, joints[i]['$']);
 			}
 		}
-	}	
+	}
 }
 
 const drawXml = function(xml) {
@@ -148,15 +174,16 @@ const drawXml = function(xml) {
 
 	const grounds = xml.c.z[0].s[0].s;
  	const joints = (xml.c.z[0].l || [''])[0].jd;
+ 	const decorations = xml.c.z[0].d[0].p;
 
 	if (!propreties.f) {
 		bg.fillStyle = "#6A7495";
 		bg.fillRect(0,0,width,height);
-		drawJointsList(bg, fg, joints);
+		drawSyncItems(bg, fg, width, decorations, joints);
 	} else {
 		order.add(Canvas.loadImage("backgrounds/BG"+propreties.f+".png"), (image) => {
 			bg.drawImage(image,0,0,width,height);
-			drawJointsList(bg, fg, joints);
+			drawSyncItems(bg, fg, width, decorations, joints);
 		});
 	}
 

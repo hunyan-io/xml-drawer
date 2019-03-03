@@ -1,6 +1,6 @@
 {
 	"name": "xml-drawer",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "An xml map drawing api for the Transformice game.",
 	"main": "index.js",
 	"dependencies": {

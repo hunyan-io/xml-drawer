@@ -1,9 +1,10 @@
 const fs = require("fs");
 const Canvas = require("canvas");
 const { parseString } = require('xml2js');
-const handleDeco = require('./decorations/handle');
+const handleDecor = require('./decorations/handle');
 
 const tiledGrounds = {"3":true,"5":true,"6":["5","6"],"7":true,"9":true,"10":["10","10p"],"11":["5","11"],"15":true}
+//const DecorAccurasy = {""}
 
 const hexToRgba = function(hex,alpha) {
 	let r = parseInt(hex.slice(0,2), 16),
@@ -70,13 +71,13 @@ const drawCircle = function(ctx, x, y, r, style) {
 	ctx.fill();
 }
 
-const drawGround = function(bg, fg, ground) {
-	if (ground.m) return;
+const drawGround = function(map, ground, foreground) {
+	if (ground.m==='') return [];
 
 	let a = (ground.p || "").split(",")[4] || 0;
 	let {x=0,y=0,l=10,h=10,o=0,t=0} = ground;
 
-	const map = (ground.n || t == 9) ? fg : bg;
+	if (!(ground.n || t == 9) == foreground) return [];
 
 	a *= Math.PI/180
 
@@ -105,28 +106,37 @@ const drawGround = function(bg, fg, ground) {
 	return [];
 }
 
-const drawJoint = function(bg, fg, joint) {
+const drawJoint = function(map, joint, foreground) {
 	if (!joint.c || !joint.p1 || !joint.p2) return;
-	let c = joint.c.split(","),
-		p1 = joint.p1.split(","),
-		p2 = joint.p2.split(",");
 
-	const map = (c[3] == "1") ? fg : bg;
+	const c = joint.c.split(","),
+		  p1 = joint.p1.split(","),
+		  p2 = joint.p2.split(","),
+		  p3 = joint.p3 && joint.p3.split(","),
+		  p4 = joint.p4 && joint.p4.split(",");
+
+	if ((c[3]==1) != foreground) return;
+
+	const alpha = Math.floor((c[2] || 1)*255).toString(16);
 
 	map.lineWidth = c[1];
 	map.lineCap = "round";
-	map.strokeStyle = hexToRgba(c[0],c[2]);
+	map.strokeStyle = '#'+'0'.repeat(c[0].length-6)+c[0]+(alpha.length<2 ? '0'+alpha : alpha);
 	map.beginPath();
 	map.moveTo(p1[0],p1[1]);
+	if (p3) map.lineTo(p3[0],p3[1]);
+	if (p4) map.lineTo(p4[0],p4[1]);
 	map.lineTo(p2[0],p2[1]);
 	map.stroke();
 }
 
-const drawDecoration = function(bg, fg, width, decoration) {
+const drawDecoration = function(map, decoration, foreground) {
 	const p = decoration.p.split(',');
-	const map = (p[0]==='0') ? bg : fg,
-		  reverse = (p[1]==='1'),
-		  [deco,w,h] = handleDeco(Canvas.createCanvas,'./'+decoration.t,decoration.c);
+
+	if ((p[0]==='1') != foreground) return; 
+
+	const reverse = (p[1]==='1'),
+		  [deco,w,h] = handleDecor(Canvas.createCanvas,'./'+decoration.t,decoration.c || '');
 	let x = decoration.x - w/2,
 		y = decoration.y - h;
 	if (reverse) {
@@ -140,21 +150,22 @@ const drawDecoration = function(bg, fg, width, decoration) {
 	}
 }
 
-const drawSyncItems = function(bg, fg, width, decorations, joints) {
-	if (decorations) {
-		for (let i = 0; i < decorations.length; i++) {
-			if (decorations[i]) {
-				drawDecoration(bg, fg, width, decorations[i]['$']);
-			}
-		}
-	}
-	if (joints) {
-		for (let i = 0; i < joints.length; i++) {
-			if (joints[i]) {
-				drawJoint(bg, fg, joints[i]['$']);
-			}
-		}
-	}
+const drawSyncItems = function(map, decorations, joints) {
+
+	for (let i = 0; i < decorations.length; i++)
+		drawDecoration(map, decorations[i].$, false);
+
+	for (let i = 0; i < joints.length; i++)
+		if (joints[i].$)
+			drawJoint(map, joints[i].$, false);
+
+	for (let i = 0; i < joints.length; i++)
+		if (joints[i].$)
+			drawJoint(map, joints[i].$, true);
+
+	for (let i = 0; i < decorations.length; i++)
+		drawDecoration(map, decorations[i].$, true);
+
 }
 
 const drawXml = function(xml) {
@@ -167,43 +178,36 @@ const drawXml = function(xml) {
 	let {l:width=800,h:height=400} = propreties;
 	width = parseInt(width), height = parseInt(height);
 
-    const bgcanvas = Canvas.createCanvas(width, height);
-    const fgcanvas = Canvas.createCanvas(width, height);
-	const bg = bgcanvas.getContext("2d");
-	const fg = fgcanvas.getContext("2d");
+    const canvas = Canvas.createCanvas(width, height);
+	const map = canvas.getContext("2d");
 
-	const grounds = xml.c.z[0].s[0].s;
- 	const joints = (xml.c.z[0].l || [''])[0].jd;
- 	const decorations = xml.c.z[0].d[0].p;
+	const grounds = xml.c.z[0].s[0].s || [],
+ 		  joints = (xml.c.z[0].l || [''])[0].$$ || [],
+ 		  decorations = xml.c.z[0].d[0].p || [];
 
 	if (!propreties.f) {
-		bg.fillStyle = "#6A7495";
-		bg.fillRect(0,0,width,height);
-		drawSyncItems(bg, fg, width, decorations, joints);
+		map.fillStyle = "#6A7495";
+		map.fillRect(0,0,width,height);
+		drawSyncItems(map, decorations, joints);
 	} else {
 		order.add(Canvas.loadImage("backgrounds/BG"+propreties.f+".png"), (image) => {
-			bg.drawImage(image,0,0,width,height);
-			drawSyncItems(bg, fg, width, decorations, joints);
+			map.drawImage(image,0,0,width,height);
+			drawSyncItems(map, decorations, joints);
 		});
 	}
 
-
- 	if (grounds) {
-		for (let i = 0; i < grounds.length; i++) {
-			if (grounds[i]) {
-				order.add(...drawGround(bg, fg, grounds[i]['$']));
-			}
-		}
-	}
+	for (let i = 0; i < grounds.length; i++)
+		order.add(...drawGround(map, grounds[i].$, false));
+	for (let i = 0; i < grounds.length; i++)
+		order.add(...drawGround(map, grounds[i].$, true));
 
 	return order.onFinish(() => {
-		bg.drawImage(fgcanvas,0,0,width,height);
-		return bgcanvas.createPNGStream();
+		return canvas.createPNGStream();
 	});
 };
 
 module.exports = function(xmlString,callback) {
-	parseString(xmlString.toLowerCase(),(err,xml) => {
+	parseString(xmlString.toLowerCase(),{explicitChildren:true,preserveChildrenOrder:true},(err,xml) => {
 		if (err) throw err;
 		drawXml(xml).then(callback);
 	});

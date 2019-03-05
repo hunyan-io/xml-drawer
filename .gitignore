@@ -1,2 +1,6 @@
 node_modules/
 decorations/sprites/
+xml/
+looper.js
+test.js
+map.png

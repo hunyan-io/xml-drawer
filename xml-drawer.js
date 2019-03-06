@@ -4,7 +4,7 @@ const { parseString } = require('xml2js');
 const handleDecor = require('./decorations/handle');
 
 const tiledGrounds = {"3":true,"5":true,"6":["5","6"],"7":true,"9":true,"10":["10","10p"],"11":["5","11"],"15":true}
-//const DecorAccurasy = {""}
+const decorOrigins = [[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1.162],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,2],[2,1],[2,Infinity],[2,2],[2,1],[2,6.166],[2,1.028],[2,2],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1.028],[2,1],[2,2],[1.333,Infinity],[2,1],[24.9,5.833],[2,1],[Infinity,Infinity],[2,Infinity],[2,Infinity],[119,4],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[4,Infinity],[2,1],[2,1.1],[2,Infinity],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,Infinity],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,Infinity],[Infinity,1],[1,1],[2,2],[2,1],[2,2],[2,1],[2,1],[Infinity,Infinity],[2,1],[2,1],[2,1],[2,2],[2,1],[2,Infinity],[2,1],[2,1],[4,1],[2,1],[2,1],[2,1],[2,1],[2,2]];
 
 const hexToRgba = function(hex,alpha) {
 	let r = parseInt(hex.slice(0,2), 16),
@@ -137,8 +137,10 @@ const drawDecoration = function(map, decoration, foreground) {
 
 	const reverse = (p[1]==='1'),
 		  [deco,w,h] = handleDecor(Canvas.createCanvas,'./'+decoration.t,decoration.c || '');
-	let x = decoration.x - w/2,
-		y = decoration.y - h;
+
+	let x = decoration.x - w/decorOrigins[decoration.t][0],
+		y = decoration.y - h/decorOrigins[decoration.t][1];
+
 	if (reverse) {
 		map.save();
 		map.translate(x, y);

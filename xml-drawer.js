@@ -87,19 +87,19 @@ const drawGround = function(map, ground, foreground) {
 		drawCircle(map,parseInt(x),parseInt(y),parseInt(l),"#"+o);
 	} else if (tiledGrounds[t]) {
 		if (typeof tiledGrounds[t] == "object") {
-			return [Canvas.loadImage("grounds/"+tiledGrounds[t][0]+".png"), (image) => {
+			return [Canvas.loadImage(__dirname+"/grounds/"+tiledGrounds[t][0]+".png"), (image) => {
 				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"));
-				return Canvas.loadImage("grounds/"+tiledGrounds[t][1]+".png").then((top) => {
+				return Canvas.loadImage(__dirname+"/grounds/"+tiledGrounds[t][1]+".png").then((top) => {
 					drawRect(map,x,y,l,h,a,top,true);
 				});
 			}];
 		} else {
-			return [Canvas.loadImage("grounds/"+t+".png"), (image) => {
+			return [Canvas.loadImage(__dirname+"/grounds/"+t+".png"), (image) => {
 				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"));
 			}];
 		}
 	} else if (t != 14) {
-		return [Canvas.loadImage("grounds/"+t+".png"), (image) => {
+		return [Canvas.loadImage(__dirname+"/grounds/"+t+".png"), (image) => {
 			drawRect(map,x,y,l,h,a,image);
 		}];
 	}
@@ -196,7 +196,7 @@ const drawXml = function(xml) {
 		map.fillRect(0,0,width,height);
 		drawSyncItems(map, decorations, joints);
 	} else {
-		order.add(Canvas.loadImage("backgrounds/BG"+propreties.f+".png"), (image) => {
+		order.add(Canvas.loadImage(__dirname+"/backgrounds/BG"+propreties.f+".png"), (image) => {
 			map.drawImage(image,0,0,width,height);
 			drawSyncItems(map, decorations, joints);
 		});

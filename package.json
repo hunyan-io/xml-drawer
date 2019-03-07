@@ -1,6 +1,6 @@
 {
 	"name": "xml-drawer",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "A module that draws Transformice maps from xml.",
 	"main": "xml-drawer.js",
 	"dependencies": {
@@ -8,5 +8,6 @@
 		"xml2js": "^0.4.19"
 	},
 	"author": "HunYan-io",
+	"repository": "https://github.com/HunYan-io/xml-drawer",
 	"license": "MIT"
 }

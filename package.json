@@ -1,14 +1,11 @@
 {
 	"name": "xml-drawer",
 	"version": "0.3.0",
-	"description": "An xml map drawing api for the Transformice game.",
-	"main": "index.js",
+	"description": "A module that draws Transformice maps from xml.",
+	"main": "xml-drawer.js",
 	"dependencies": {
 		"canvas": "^2.3.1",
 		"xml2js": "^0.4.19"
-	},
-	"scripts": {
-		"start": "node index.js"
 	},
 	"author": "HunYan-io",
 	"license": "MIT"

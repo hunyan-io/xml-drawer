@@ -1,2 +1,2 @@
 # xml-drawer
-An xml map drawing api for the Transformice game.
+A module that draws Transformice maps from xml.

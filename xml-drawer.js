@@ -133,19 +133,20 @@ const drawJoint = function(map, joint, foreground) {
 const drawDecoration = function(map, decoration, foreground) {
 	const p = decoration.p.split(',');
 
-	if ((p[0]==='1') != foreground) return; 
+	let isDeco = (decoration.t!=34 && decoration.t!=117);
+	if ((isDeco && ((p[0]==='1') != foreground)) || (isDeco == (foreground===null))) return; 
 
 	const reverse = (p[1]==='1'),
 		  [deco,w,h] = handleDecor(Canvas.createCanvas,'./'+decoration.t,decoration.c || '');
 
-	let x = decoration.x - w/decorOrigins[decoration.t][0],
+	let x = decoration.x - w/decorOrigins[decoration.t][0]*(reverse?-1:1),
 		y = decoration.y - h/decorOrigins[decoration.t][1];
 
 	if (reverse) {
 		map.save();
 		map.translate(x, y);
 		map.scale(-1,1)
-		map.drawImage(deco,-w,0);
+		map.drawImage(deco,0,0);
 		map.restore();
 	} else {
 		map.drawImage(deco,x,y);
@@ -153,6 +154,9 @@ const drawDecoration = function(map, decoration, foreground) {
 }
 
 const drawSyncItems = function(map, decorations, joints) {
+
+	for (let i = decorations.length-1; i >= 0; i--)
+		drawDecoration(map, decorations[i].$, null);
 
 	for (let i = 0; i < decorations.length; i++)
 		drawDecoration(map, decorations[i].$, false);

@@ -1,51 +1,50 @@
 const fs = require("fs");
-const Canvas = require("canvas");
 const { parseString } = require('xml2js');
-const handleDecor = require('./decorations/handle');
+const resource = require('./resource');
 
 const tiledGrounds = {"3":true,"5":true,"6":["5","6"],"7":true,"9":true,"10":["10","10p"],"11":["5","11"],"15":true}
-const decorOrigins = [[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1.162],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,2],[2,1],[2,Infinity],[2,2],[2,1],[2,6.166],[2,1.028],[2,2],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1.028],[2,1],[2,2],[1.333,Infinity],[2,1],[24.9,5.833],[2,1],[Infinity,Infinity],[2,Infinity],[2,Infinity],[119,4],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[4,Infinity],[2,1],[2,1.1],[2,Infinity],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,Infinity],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,Infinity],[Infinity,1],[1,1],[2,2],[2,1],[2,2],[2,1],[2,1],[Infinity,Infinity],[2,1],[2,1],[2,1],[2,2],[2,1],[2,Infinity],[2,1],[2,1],[4,1],[2,1],[2,1],[2,1],[2,1],[2,2]];
+const decorOrigins = [[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[1.35,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1.162],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2.3,1.03],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,2],[2,1],[2,Infinity],[2,2],[2,1],[2,6.166],[2,1.028],[2,2],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1.028],[2,1],[2,2],[1.333,Infinity],[2,1],[24.9,5.833],[2,1],[Infinity,Infinity],[2,Infinity],[2,Infinity],[119,4],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[4,Infinity],[2,1],[2,1.1],[2,Infinity],[2,1],[3.8,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,Infinity],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,Infinity],[Infinity,1],[1,1],[2,2],[2,1],[2,2],[2,1],[2,1],[Infinity,Infinity],[2,1],[2,1],[2,1],[2,2],[2,1],[2,Infinity],[2,1],[2,1],[4,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1.26],[2,1.2]];
+const noStrokeGrounds = {"1":true,"8":true,"9":true,"15":true}
 
-const hexToRgba = function(hex,alpha) {
-	let r = parseInt(hex.slice(0,2), 16),
-		g = parseInt(hex.slice(2,4), 16),
-		b = parseInt(hex.slice(4,6), 16);
-	return 'rgba('+r+','+g+','+b+','+alpha+')';
-}
-
-const promiseHandling = function() {
+const promiseHandler = function() {
 	this.promises = [];
 	this.pending = [];
-	this.add = (promise, cb) => {
-		let len = this.promises.length;
-		this.promises[len] = promise;
+	this.add = (arr) => {
+		if (!Array.isArray(arr)) return;
+		let [promise, cb, ...args] = arr;
+		const len = this.pending.length;
+		const psLen = this.promises.length;
 		this.pending[len] = true;
+		const checkPending = value => {
+			if (this.pending[len-1]) {
+				return this.promises[psLen-1].then(() => {
+					this.pending[len] = false;
+					return cb(value, ...args);
+				});
+			} else {
+				return cb(value, ...args);
+			}
+		}
 		if (promise instanceof Promise) {
-			this.promises[len] = promise.then((value) => {
-				if (this.pending[len-1]) {
-					return this.promises[len-1].then(() => {
-						this.pending[len] = false;
-						return cb(value);
-					});
-				} else {
-					return cb(value);
-				} 
-			});
+			this.promises[psLen] = promise.then(checkPending);
 		} else {
-			this.pending[len] = false;
+			checkPending(promise);
 		}
 	}
-	this.onFinish = (callback) => {
+	this.onFinish = callback => {
 		return Promise.all(this.promises).then(callback);
 	}
 }
 
-const drawRect = function(ctx, x, y, width, height, angle, style, repeat) {
+const drawRect = function(ctx, x, y, width, height, angle, style, stroke, x_repeat) {
 	ctx.translate(x,y);
 	ctx.rotate(angle);
 	height = parseInt(height)+0.5;
-	if (style instanceof Canvas.Image) {
-		if (repeat) {
+	if (typeof style != "object" || resource.isPattern(style)) {
+		ctx.fillStyle = style;
+		ctx.fillRect(-width/2, -height/2, width, height);
+	} else {
+		if (x_repeat) {
 			let	w = style.width,
 				h = style.height;
 			const len = Math.ceil(width/w);
@@ -56,9 +55,11 @@ const drawRect = function(ctx, x, y, width, height, angle, style, repeat) {
 		} else {
 			ctx.drawImage(style, -width/2, -height/2, width, height);
 		}
-	} else {
-		ctx.fillStyle = style;
-		ctx.fillRect(-width/2, -height/2, width, height);
+	}
+	if (stroke) {
+		ctx.strokeStyle = "#000000";
+		ctx.lineWidth = 0.4;
+		ctx.strokeRect(-width/2, -height/2, width, height);
 	}
 	ctx.rotate(-angle);
 	ctx.translate(-x,-y);
@@ -72,38 +73,46 @@ const drawCircle = function(ctx, x, y, r, style) {
 }
 
 const drawGround = function(map, ground, foreground) {
-	if (ground.m==='') return [];
+	if (ground.m==='') return;
 
 	let a = (ground.p || "").split(",")[4] || 0;
-	let {x=0,y=0,l=10,h=10,o=0,t=0} = ground;
+	let {x=0,y=0,l=10,h=10,o,t="0"} = ground;
 
-	if (!(ground.n || t == 9) == foreground) return [];
+	if (!(ground.n || t == 9) == foreground) return;
 
-	a *= Math.PI/180
+	a *= Math.PI/180;
+
+	const stroke = !noStrokeGrounds[t];
 
 	if (t == 12) {
-		drawRect(map,x,y,l,h,a,"#"+o);
+		if (!o) return;
+		if (o.length>6) {
+			if (o.slice(-8)==='ffffffff')
+				return;
+			o = o.slice(-6);
+		}
+		return [map, drawRect, x, y, l, h, a, "#"+o];
 	} else if (t == 13) {
-		drawCircle(map,parseInt(x),parseInt(y),parseInt(l),"#"+o);
+		return [map, drawCircle, parseInt(x), parseInt(y), parseInt(l), "#"+o];
 	} else if (tiledGrounds[t]) {
 		if (typeof tiledGrounds[t] == "object") {
-			return [Canvas.loadImage(__dirname+"/grounds/"+tiledGrounds[t][0]+".png"), (image) => {
-				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"));
-				return Canvas.loadImage(__dirname+"/grounds/"+tiledGrounds[t][1]+".png").then((top) => {
-					drawRect(map,x,y,l,h,a,top,true);
+			return [resource.loadImage(__dirname+"/grounds/"+tiledGrounds[t][0]), (image) => {
+				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"),stroke);
+				return resource.loadImage(__dirname+"/grounds/"+tiledGrounds[t][1]).then((top) => {
+					drawRect(map,x,y,l,h,a,top,stroke,true);
 				});
 			}];
 		} else {
-			return [Canvas.loadImage(__dirname+"/grounds/"+t+".png"), (image) => {
-				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"));
+			return [resource.loadImage(__dirname+"/grounds/"+t), (image) => {
+				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"),stroke);
 			}];
 		}
 	} else if (t != 14) {
-		return [Canvas.loadImage(__dirname+"/grounds/"+t+".png"), (image) => {
-			drawRect(map,x,y,l,h,a,image);
+		return [resource.load("/grounds/"+t, [parseInt(l),parseInt(h)]), (gcanvas) => {
+			drawRect(map,x,y,l,h,a,gcanvas,stroke);
 		}];
 	}
-	return [];
+	return;
 }
 
 const drawJoint = function(map, joint, foreground) {
@@ -130,91 +139,100 @@ const drawJoint = function(map, joint, foreground) {
 	map.stroke();
 }
 
-const drawDecoration = function(map, decoration, foreground) {
-	const p = decoration.p.split(',');
+const drawDecoration = function(map, obj, foreground) {
+	const decoration = obj.$;
+	if (!decoration) return;
+	
+	if (obj['#name'] == 'f')
+		decoration.t = 132;
+	else if (obj['#name'] == 't')
+		decoration.t = 133;
+	else if (obj['#name'] !== 'p')
+		return;
 
-	let isDeco = (decoration.t!=34 && decoration.t!=117);
-	if ((isDeco && ((p[0]==='1') != foreground)) || (isDeco == (foreground===null))) return; 
+	const p = (decoration.p || (decoration.d!==undefined ? '1,0' : '0,0')).split(',');
 
-	const reverse = (p[1]==='1'),
-		  [deco,w,h] = handleDecor(Canvas.createCanvas,'./'+decoration.t,decoration.c || '');
+	if (decoration.t==34 || decoration.t==117) {
+		if (foreground !== null)
+			return;
+	} else if ((p[0]==='1') != foreground)
+		return;
 
-	let x = decoration.x - w/decorOrigins[decoration.t][0]*(reverse?-1:1),
-		y = decoration.y - h/decorOrigins[decoration.t][1];
+	const reverse = (p[1]==='1');
 
-	if (reverse) {
-		map.save();
-		map.translate(x, y);
-		map.scale(-1,1)
-		map.drawImage(deco,0,0);
-		map.restore();
-	} else {
-		map.drawImage(deco,x,y);
-	}
-}
+	return [resource.load('/decorations/'+decoration.t,[ resource.shadeColor , decoration.c ? decoration.c.split(",").map(resource.hexToRgb) : [] ]), (res)=>{
+		const [deco,w,h] = res,
+			  x = decoration.x - w/decorOrigins[decoration.t][0]*(reverse?-1:1),
+			  y = decoration.y - h/decorOrigins[decoration.t][1];
 
-const drawSyncItems = function(map, decorations, joints) {
-
-	for (let i = decorations.length-1; i >= 0; i--)
-		drawDecoration(map, decorations[i].$, null);
-
-	for (let i = 0; i < decorations.length; i++)
-		drawDecoration(map, decorations[i].$, false);
-
-	for (let i = 0; i < joints.length; i++)
-		if (joints[i].$)
-			drawJoint(map, joints[i].$, false);
-
-	for (let i = 0; i < joints.length; i++)
-		if (joints[i].$)
-			drawJoint(map, joints[i].$, true);
-
-	for (let i = 0; i < decorations.length; i++)
-		drawDecoration(map, decorations[i].$, true);
-
+		if (reverse) {
+			map.save();
+			map.translate(x, y);
+			map.scale(-1,1)
+			map.drawImage(deco,0,0);
+			map.restore();
+		} else {
+			map.drawImage(deco,x,y);
+		}
+	}];
 }
 
 const drawXml = function(xml) {
 	if (!xml.c || !xml.c.p || !xml.c.z || !xml.c.z[0]) throw error("Invalid tfm map xml format.");
 	
-	const order = new promiseHandling();
+	const order = new promiseHandler();
 
 	const propreties = typeof xml.c.p[0] == 'object' && xml.c.p[0]['$'] || {};
 
 	let {l:width=800,h:height=400} = propreties;
 	width = parseInt(width), height = parseInt(height);
 
-    const canvas = Canvas.createCanvas(width, height);
-	const map = canvas.getContext("2d");
+    const [canvas, map] = resource.createCanvas(width, height);
 
 	const grounds = xml.c.z[0].s[0].s || [],
  		  joints = (xml.c.z[0].l || [''])[0].$$ || [],
- 		  decorations = xml.c.z[0].d[0].p || [];
+ 		  decorations = xml.c.z[0].d[0].$$ || [];
 
 	if (!propreties.f) {
 		map.fillStyle = "#6A7495";
 		map.fillRect(0,0,width,height);
-		drawSyncItems(map, decorations, joints);
 	} else {
-		order.add(Canvas.loadImage(__dirname+"/backgrounds/BG"+propreties.f+".png"), (image) => {
-			map.drawImage(image,0,0,width,height);
-			drawSyncItems(map, decorations, joints);
-		});
+		order.add([resource.load("/backgrounds/"+propreties.f, canvas), ()=>{}]);
 	}
-
+	//background decorations
+	for (let i = decorations.length-1; i > -1; i--)
+		order.add(drawDecoration(map, decorations[i], null));
+	//decorations
+	for (let i = 0; i < decorations.length; i++)
+		order.add(drawDecoration(map, decorations[i], false));
+	//joints
+	for (let i = 0; i < joints.length; i++)
+		if (joints[i].$)
+			order.add([map, drawJoint, joints[i].$, false]);
+	//grounds
 	for (let i = 0; i < grounds.length; i++)
-		order.add(...drawGround(map, grounds[i].$, false));
+		order.add(drawGround(map, grounds[i].$, false));
+	//foreground joints
+	for (let i = 0; i < joints.length; i++)
+		if (joints[i].$)
+			order.add([map, drawJoint, joints[i].$, true]);
+	//foreground decorations
+	for (let i = 0; i < decorations.length; i++)
+		order.add(drawDecoration(map, decorations[i], true));
+	//foreground grounds
 	for (let i = 0; i < grounds.length; i++)
-		order.add(...drawGround(map, grounds[i].$, true));
+		order.add(drawGround(map, grounds[i].$, true));
 
 	return order.onFinish(() => {
-		return canvas.createPNGStream();
+		return canvas
 	});
 };
 
 module.exports = function(xmlString,callback) {
-	parseString(xmlString.toLowerCase(),{explicitChildren:true,preserveChildrenOrder:true},(err,xml) => {
-		if (err) throw err;
-		drawXml(xml).then(callback);
+	return new Promise((resolve, reject) => {
+		parseString(xmlString.toLowerCase(),{explicitChildren:true,preserveChildrenOrder:true},(err,xml) => {
+			if (err) return reject(err);
+			resolve(drawXml(xml));
+		});
 	});
 }

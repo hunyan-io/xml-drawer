@@ -1,6 +1,6 @@
 {
 	"name": "xml-drawer",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"description": "A module that draws Transformice maps from xml.",
 	"main": "xml-drawer.js",
 	"dependencies": {

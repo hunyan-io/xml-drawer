@@ -184,11 +184,17 @@ const drawShamanObject = function(map, obj) {
 	const object = obj.$;
 	if (!object) return;
 
-	const angle = ((object.p || '').split(',')[0] || 0)*Math.PI/180;
+	const p = (object.p || '0,0').split(',')
+	const angle = p[0]*Math.PI/180;
+	const ghost = p[1]==='1';
 
 	return [resource.load('/shaman/'+object.c, resource.shadeColor), (res)=>{
 		const [img,w,h] = res;
-		drawRect(map,object.x,object.y,w,h,angle,img);
+		if (ghost)
+			map.globalAlpha = 0.5;
+		drawRect(map,object.x,object.y,img.width,img.height,angle,img);
+		if (ghost)
+			map.globalAlpha = 1;
 	}];
 }
 

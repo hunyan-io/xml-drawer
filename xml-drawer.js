@@ -2,7 +2,7 @@ const fs = require("fs");
 const { parseString } = require('xml2js');
 const resource = require('./resource');
 
-//TODO LIST <Z INDEX ATTRIBUTE><(TAG/SUBTAG): P/DS P/mc D/DC D/DC2 D/DS><O TAG SHAMAN OBJECTS>
+//TODO LIST <Z INDEX ATTRIBUTE><(TAG/SUBTAG): P/DS P/mc D/DC D/DC2 D/DS>
 
 const tiledGrounds = {"3":true,"5":true,"6":["5","6"],"7":true,"9":true,"10":["10","10p"],"11":["5","11"],"15":true}
 const decorOrigins = [[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[1.35,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1.162],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2.3,1.03],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,2],[2,1],[2,Infinity],[2,2],[2,1],[2,6.166],[2,1.028],[2,2],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1.028],[2,1],[2,2],[1.333,Infinity],[2,1],[24.9,5.833],[2,1],[Infinity,Infinity],[2,Infinity],[2,Infinity],[119,4],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[4,Infinity],[2,1],[2,1.1],[2,Infinity],[2,1],[3.8,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,Infinity],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,Infinity],[Infinity,1],[1,1],[2,2],[2,1],[2,2],[2,1],[2,1],[Infinity,Infinity],[2,1],[2,1],[2,1],[2,2],[2,1],[2,Infinity],[2,1],[2,1],[4,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1.26],[2,1.2]];
@@ -180,6 +180,18 @@ const drawDecoration = function(map, obj, foreground) {
 	}];
 }
 
+const drawShamanObject = function(map, obj) {
+	const object = obj.$;
+	if (!object) return;
+
+	const angle = ((object.p || '').split(',')[0] || 0)*Math.PI/180;
+
+	return [resource.load('/shaman/'+object.c, resource.shadeColor), (res)=>{
+		const [img,w,h] = res;
+		drawRect(map,object.x,object.y,w,h,angle,img);
+	}];
+}
+
 const drawImages = function(map, dAttr, order) {
 	if (!dAttr) return;
 
@@ -210,7 +222,8 @@ const drawXml = function(xml) {
 	
 	const grounds = xml.c.z[0].s[0].s || [],
  		  joints = (xml.c.z[0].l || [''])[0].$$ || [],
- 		  decorations = xml.c.z[0].d[0].$$ || [];
+ 		  decorations = xml.c.z[0].d[0].$$ || [],
+ 		  shamanObjects = xml.c.z[0].o[0].o || [];
 
 	//background images
 	drawImages(map, propreties.dd, order);
@@ -232,6 +245,9 @@ const drawXml = function(xml) {
 	//grounds
 	for (let i = 0; i < grounds.length; i++)
 		order.add(drawGround(map, grounds[i].$, false));
+	//shaman objects
+	for (let i = 0; i < shamanObjects.length; i++)
+		order.add(drawShamanObject(map, shamanObjects[i]));
 	//foreground joints
 	for (let i = 0; i < joints.length; i++)
 		if (joints[i].$)

@@ -59,8 +59,8 @@ const drawRect = function(ctx, x, y, width, height, angle, style, stroke, x_repe
 		}
 	}
 	if (stroke) {
-		ctx.strokeStyle = "#000000";
-		ctx.lineWidth = 0.4;
+		ctx.strokeStyle = "#000000aa";
+		ctx.lineWidth = 0.3;
 		ctx.strokeRect(-width/2, -height/2, width, height);
 	}
 	ctx.rotate(-angle);
@@ -94,7 +94,8 @@ const drawGround = function(map, ground, foreground) {
 				return;
 			o = o.slice(-6);
 		}
-		return [map, drawRect, x, y, l, h, a, "#"+o];
+		o = '#'+'0'.repeat(6-o.length)+o
+		return [map, drawRect, x, y, l, h, a, o];
 	} else if (t == 13) {
 		return [map, drawCircle, parseInt(x), parseInt(y), parseInt(l), "#"+o];
 	} else if (tiledGrounds[t]) {
@@ -111,8 +112,8 @@ const drawGround = function(map, ground, foreground) {
 			}];
 		}
 	} else if (t != 14) {
-		return [resource.load("/grounds/"+t, [parseInt(l),parseInt(h)]), (gcanvas) => {
-			drawRect(map,x,y,l,h,a,gcanvas,stroke);
+		return [resource.load("/grounds/"+t, [l,h]), (gcanvas) => {
+			drawRect(map,x,y,gcanvas.width,gcanvas.height,a,gcanvas,stroke);
 		}];
 	}
 	return;
@@ -163,10 +164,9 @@ const drawDecoration = function(map, obj, foreground) {
 
 	const reverse = (p[1]==='1');
 
-	return [resource.load('/decorations/'+decoration.t,[ resource.shadeColor , decoration.c ? decoration.c.split(",").map(resource.hexToRgb) : [] ]), (res)=>{
-		const [deco,w,h] = res,
-			  x = decoration.x - w/decorOrigins[decoration.t][0]*(reverse?-1:1),
-			  y = decoration.y - h/decorOrigins[decoration.t][1];
+	return [resource.load('/decorations/'+decoration.t,[ resource.shadeColor , decoration.c ? decoration.c.split(",").map(resource.hexToRgb) : [] ]), (deco)=>{
+		const x = decoration.x - deco.width*(reverse?-1:1)/decorOrigins[decoration.t][0],
+			  y = decoration.y - deco.height/decorOrigins[decoration.t][1];
 
 		if (reverse) {
 			map.save();
@@ -188,8 +188,7 @@ const drawShamanObject = function(map, obj) {
 	const angle = p[0]*Math.PI/180;
 	const ghost = p[1]==='1';
 
-	return [resource.load('/shaman/'+object.c, resource.shadeColor), (res)=>{
-		const [img,w,h] = res;
+	return [resource.load('/shaman/'+object.c, resource.shadeColor), (img)=>{
 		if (ghost)
 			map.globalAlpha = 0.5;
 		drawRect(map,object.x,object.y,img.width,img.height,angle,img);

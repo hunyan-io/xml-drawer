@@ -24,6 +24,7 @@ const promiseHandler = function() {
 					return cb(value, ...args);
 				});
 			} else {
+				this.pending[len] = false;
 				return cb(value, ...args);
 			}
 		}
@@ -87,7 +88,7 @@ const drawGround = function(map, ground, foreground) {
 
 	const stroke = (p[0]==='0') && !noStrokeGrounds[t];
 
-	if (t == 12) {
+	if (t == 12 || t == 13) {
 		if (!o) return;
 		if (o.length>6) {
 			if (o.slice(-8)==='ffffffff')
@@ -95,9 +96,7 @@ const drawGround = function(map, ground, foreground) {
 			o = o.slice(-6);
 		}
 		o = '#'+'0'.repeat(6-o.length)+o
-		return [map, drawRect, x, y, l, h, a, o];
-	} else if (t == 13) {
-		return [map, drawCircle, parseInt(x), parseInt(y), parseInt(l), "#"+o];
+		return t == 12 ? [map, drawRect, x, y, l, h, a, o] : [map, drawCircle, parseInt(x), parseInt(y), parseInt(l), "#"+o];
 	} else if (tiledGrounds[t]) {
 		if (typeof tiledGrounds[t] == "object") {
 			return [resource.loadImage(__dirname+"/grounds/"+tiledGrounds[t][0]), (image) => {
@@ -113,7 +112,7 @@ const drawGround = function(map, ground, foreground) {
 		}
 	} else if (t != 14) {
 		return [resource.load("/grounds/"+t, [l,h]), (gcanvas) => {
-			drawRect(map,x,y,gcanvas.width,gcanvas.height,a,gcanvas,stroke);
+			drawRect(map,x,y,gcanvas.w,gcanvas.h,a,gcanvas,stroke);
 		}];
 	}
 	return;
@@ -132,10 +131,9 @@ const drawJoint = function(map, joint, foreground) {
 
 	const alpha = Math.floor((c[2] || 1)*255).toString(16);
 
-	map.lineWidth = c[1];
+	map.lineWidth = c[1] || 1;
 	map.lineCap = "round";
 	map.strokeStyle = '#'+'0'.repeat(c[0].length-6)+c[0]+(alpha.length<2 ? '0'+alpha : alpha);
-	console.log('#'+'0'.repeat(c[0].length-6)+c[0]+(alpha.length<2 ? '0'+alpha : alpha));
 	map.beginPath();
 	map.moveTo(p1[0],p1[1]);
 	if (p3) map.lineTo(p3[0],p3[1]);
@@ -166,8 +164,8 @@ const drawDecoration = function(map, obj, foreground) {
 	const reverse = (p[1]==='1');
 
 	return [resource.load('/decorations/'+decoration.t,[ resource.shadeColor , decoration.c ? decoration.c.split(",").map(resource.hexToRgb) : [] ]), (deco)=>{
-		const x = decoration.x - deco.width*(reverse?-1:1)/decorOrigins[decoration.t][0],
-			  y = decoration.y - deco.height/decorOrigins[decoration.t][1];
+		const x = decoration.x - deco.w*(reverse?-1:1)/decorOrigins[decoration.t][0],
+			  y = decoration.y - deco.h/decorOrigins[decoration.t][1];
 
 		if (reverse) {
 			map.save();
@@ -192,7 +190,7 @@ const drawShamanObject = function(map, obj) {
 	return [resource.load('/shaman/'+object.c, resource.shadeColor), (img)=>{
 		if (ghost)
 			map.globalAlpha = 0.5;
-		drawRect(map,object.x,object.y,img.width,img.height,angle,img);
+		drawRect(map,object.x,object.y,img.w,img.h,angle,img);
 		if (ghost)
 			map.globalAlpha = 1;
 	}];

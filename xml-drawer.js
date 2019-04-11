@@ -150,7 +150,7 @@ const drawDecoration = function(map, obj, foreground) {
 		decoration.t = 132;
 	else if (obj['#name'] == 't')
 		decoration.t = 133;
-	else if (obj['#name'] !== 'p')
+	else if (obj['#name'] !== 'p' || decoration.t > 131)
 		return;
 
 	const p = (decoration.p || (decoration.d!==undefined ? '1,0' : '0,0')).split(',');
@@ -179,9 +179,10 @@ const drawDecoration = function(map, obj, foreground) {
 	}];
 }
 
-const drawShamanObject = function(map, obj) {
+const drawShamanObject = function(map, obj, hideAnchors) {
 	const object = obj.$;
 	if (!object) return;
+	else if (hideAnchors && (object.c == 22 || (object.c > 10 && object.c < 17))) return;
 
 	const p = (object.p || '0,0').split(',')
 	const angle = p[0]*Math.PI/180;
@@ -209,6 +210,40 @@ const drawImages = function(map, dAttr, order) {
 	}
 }
 
+const drawMouseSpawn = function(map, dTag, ds, order) {
+	let coord = [];
+	if (dTag.ds) {
+		coord[0] = dTag.ds[0].x || 400,
+		coord[1] = dTag.ds[1].y || 200;
+	} else if (ds) {
+		let s = ds.split(';');
+		let pos = s[1].split(',');
+		if (s[0] == 'm') 
+			coord = pos;
+		else {
+			let modeX = s[0] == 'y';
+			for (let i = 0; i < pos.length; i++) {
+				coord[i*2] = modeX ? pos[i] : 400;
+				coord[i*2+1] = modeX ? 200 : pos[i];
+			}
+		}
+	}
+	for (let i = 0; i < coord.length; i+=2)
+		order.add([resource.loadImage(__dirname+'/decorations/m'), img=>{
+			map.drawImage(img,coord[i]-img.width/2,coord[i+1]-img.height/2,img.width,img.height);
+		}]);
+	if (dTag.dc)
+		order.add([resource.loadImage(__dirname+'/decorations/s'), img=>{
+			let t = dTag.dc[0].$;
+			map.drawImage(img,t.x-img.width/2,t.y-img.height*0.6,img.width,img.height);
+		}]);
+	if (dTag.dc2)
+		order.add([resource.loadImage(__dirname+'/decorations/s'), img=>{
+			let t = dTag.dc2[0].$;
+			map.drawImage(img,t.x-img.width/2,t.y-img.height*0.6,img.width,img.height);
+		}]);
+}
+
 const drawXml = function(xml) {
 	if (!xml.c || !xml.c.p || !xml.c.z || !xml.c.z[0]) throw error("Invalid tfm map xml format.");
 	
@@ -226,8 +261,11 @@ const drawXml = function(xml) {
 	
 	const grounds = xml.c.z[0].s[0].s || [],
  		  joints = (xml.c.z[0].l || [''])[0].$$ || [],
- 		  decorations = xml.c.z[0].d[0].$$ || [],
+ 		  dTag = xml.c.z[0].d[0],
+ 		  decorations = dTag.$$ || [],
  		  shamanObjects = xml.c.z[0].o[0].o || [];
+
+ 	const hideAnchors = propreties.mc !== undefined;
 
 	//background images
 	drawImages(map, propreties.dd, order);
@@ -251,7 +289,7 @@ const drawXml = function(xml) {
 		order.add(drawGround(map, grounds[i].$, false));
 	//shaman objects
 	for (let i = 0; i < shamanObjects.length; i++)
-		order.add(drawShamanObject(map, shamanObjects[i]));
+		order.add(drawShamanObject(map, shamanObjects[i], hideAnchors));
 	//foreground joints
 	for (let i = 0; i < joints.length; i++)
 		if (joints[i].$)
@@ -264,6 +302,8 @@ const drawXml = function(xml) {
 		order.add(drawGround(map, grounds[i].$, true));
 	//foreground images
 	drawImages(map, propreties.d, order);
+	//mouse spawn objects
+	drawMouseSpawn(map, dTag, propreties.ds, order);
 
 	return order.onFinish(() => {
 		return canvas

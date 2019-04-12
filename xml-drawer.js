@@ -2,7 +2,7 @@ const fs = require("fs");
 const { parseString } = require('xml2js');
 const resource = require('./resource');
 
-//TODO LIST <Z INDEX ATTRIBUTE><(TAG/SUBTAG): P/DS P/mc D/DC D/DC2 D/DS>
+//TODO LIST <Z INDEX ATTRIBUTE><HOLE LIGHT>
 
 const tiledGrounds = {"3":true,"5":true,"6":["5","6"],"7":true,"9":true,"10":["10","10p"],"11":["5","11"],"15":true}
 const decorOrigins = [[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[1.35,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1.162],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1],[2,1],[2.3,1.03],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,2],[2,1],[2,Infinity],[2,2],[2,1],[2,6.166],[2,1.028],[2,2],[2,1],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1.028],[2,1],[2,2],[1.333,Infinity],[2,1],[24.9,5.833],[2,1],[Infinity,Infinity],[2,Infinity],[2,Infinity],[119,4],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[4,Infinity],[2,1],[2,1.1],[2,Infinity],[2,1],[3.8,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,2],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,Infinity],[2,1],[2,1],[2,1],[2,1],[Infinity,Infinity],[2,2],[2,Infinity],[Infinity,1],[1,1],[2,2],[2,1],[2,2],[2,1],[2,1],[Infinity,Infinity],[2,1],[2,1],[2,1],[2,2],[2,1],[2,Infinity],[2,1],[2,1],[4,1],[2,1],[2,1],[2,1],[2,1],[2,2],[2,1.26],[1.77,1.2]];
@@ -213,8 +213,8 @@ const drawImages = function(map, dAttr, order) {
 const drawMouseSpawn = function(map, dTag, ds, order) {
 	let coord = [];
 	if (dTag.ds) {
-		coord[0] = dTag.ds[0].x || 400,
-		coord[1] = dTag.ds[1].y || 200;
+		coord[0] = dTag.ds[0].$.x || 400,
+		coord[1] = dTag.ds[0].$.y || 200;
 	} else if (ds) {
 		let s = ds.split(';');
 		let pos = s[1].split(',');
@@ -230,17 +230,17 @@ const drawMouseSpawn = function(map, dTag, ds, order) {
 	}
 	for (let i = 0; i < coord.length; i+=2)
 		order.add([resource.loadImage(__dirname+'/decorations/m'), img=>{
-			map.drawImage(img,coord[i]-img.width/2,coord[i+1]-img.height/2,img.width,img.height);
+			map.drawImage(img,coord[i]-img.width/2,coord[i+1]-img.height*0.67,img.width,img.height);
 		}]);
 	if (dTag.dc)
 		order.add([resource.loadImage(__dirname+'/decorations/s'), img=>{
 			let t = dTag.dc[0].$;
-			map.drawImage(img,t.x-img.width/2,t.y-img.height*0.6,img.width,img.height);
+			map.drawImage(img,t.x-img.width/2,t.y-img.height*0.7,img.width,img.height);
 		}]);
 	if (dTag.dc2)
 		order.add([resource.loadImage(__dirname+'/decorations/s'), img=>{
 			let t = dTag.dc2[0].$;
-			map.drawImage(img,t.x-img.width/2,t.y-img.height*0.6,img.width,img.height);
+			map.drawImage(img,t.x-img.width/2,t.y-img.height*0.7,img.width,img.height);
 		}]);
 }
 

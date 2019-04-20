@@ -200,11 +200,13 @@ const drawShamanObject = function(map, obj, hideAnchors) {
 const drawImages = function(map, dAttr, order) {
 	if (!dAttr) return;
 
-	const images = dAttr.split(';');
+	const images = dAttr.split(';'),
+		  empty = ()=>{};
 
 	for (i = 0; i < images.length; i++) {
 		let [url='', x=0, y=0] = images[i].split(',');
-		order.add([resource.loadImage('https://www.transformice.com/images/'+url), (image)=>{
+		order.add([resource.loadImage('https://www.transformice.com/images/'+url).catch(empty), (image)=>{
+			if (!image) return;
 			map.drawImage(image,x,y,image.width,image.height);
 		}]);
 	}

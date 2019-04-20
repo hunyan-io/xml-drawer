@@ -110,7 +110,7 @@ const drawGround = function(map, ground, foreground) {
 				drawRect(map,x,y,l,h,a,map.createPattern(image,"repeat"),stroke);
 			}];
 		}
-	} else if (t != 14) {
+	} else if (t != 14 && t < 16) {
 		return [resource.load("/grounds/"+t, [l,h]), (gcanvas) => {
 			drawRect(map,x,y,gcanvas.w,gcanvas.h,a,gcanvas,stroke);
 		}];

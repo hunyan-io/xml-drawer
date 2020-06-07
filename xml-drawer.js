@@ -96,7 +96,7 @@ const drawGround = function(map, ground, foreground) {
 			o = o.slice(-6);
 		}
 		o = '#'+'0'.repeat(6-o.length)+o
-		return t == 12 ? [map, drawRect, x, y, l, h, a, o] : [map, drawCircle, parseInt(x), parseInt(y), parseInt(l), "#"+o];
+		return t == 12 ? [map, drawRect, x, y, l, h, a, o] : [map, drawCircle, parseInt(x), parseInt(y), parseInt(l), o];
 	} else if (tiledGrounds[t]) {
 		if (typeof tiledGrounds[t] == "object") {
 			return [resource.loadImage(__dirname+"/grounds/"+tiledGrounds[t][0]), (image) => {
